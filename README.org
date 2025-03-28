@@ -3,6 +3,8 @@
 #+EMAIL: nitin@codery.xyz
 #+VERSION: 1.0.0
 
+[[./icon128.png]]
+
 * Index
 - [[*Introduction][Introduction]]
 - [[*Installation][Installation]]
