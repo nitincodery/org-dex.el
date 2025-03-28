@@ -1,0 +1,216 @@
+#+TITLE: org-dex.el - Archive Web Pages as SingleFiles in Org-mode
+#+AUTHOR: Nitin Choudhary
+#+EMAIL: nitin@codery.xyz
+#+VERSION: 1.0.0
+
+* Index
+- [[*Introduction][Introduction]]
+- [[*Installation][Installation]]
+  - [[**Dependencies][Dependencies]]
+  - [[**Installing org-dex][Installing org-dex]]
+- [[*Usage][Usage]]
+  - [[**Accessing Commands][Accessing Commands]]
+  - [[**Archiving Web Links][Archiving Web Links]]
+  - [[**Fetching Titles for URLs][Fetching Titles for URLs]]
+  - [[**Opening Links][Opening Links]]
+  - [[**Viewing Logs][Viewing Logs]]
+- [[*Customization][Customization]]
+  - [[**General Options][General Options]]
+  - [[**Title Fetching Options][Title Fetching Options]]
+
+* Introduction
+
+=Org-Dex.el= is an Emacs package designed to enhance Org-mode by integrating the SingleFile CLI tool, allowing users to archive web pages as single HTML files and fetch webpage titles for raw URLs directly within Org buffers. This package is tailored for Org-mode enthusiasts who need a robust system to preserve online content locally, enrich their notes with titled links, and maintain an organized workflow. It combines archiving capabilities with link management, offering flexibility through a variety of commands and extensive customization options.
+
+Key features include:
+- Archiving Org-mode links into SingleFile HTML files and/or companion Org files with metadata.
+- Fetching webpage titles for raw URLs and converting them into proper Org-mode links.
+- Resetting archived links back to their original URLs, with optional deletion of associated files.
+- Reverting links to their original URLs if archived files are missing.
+- Opening archived SingleFile HTML files or URLs directly from Org-mode.
+- A Transient-based menu for streamlined access to all commands.
+
+This tool is ideal for researchers, writers, and anyone who relies on Org-mode to manage web-based information efficiently.
+
+* Installation
+
+To use =org-dex.el=, you must install its dependencies and configure it within Emacs. The process ensures all required tools and libraries are available for its full functionality.
+
+** Dependencies
+
+1. *SingleFile CLI*
+   - Purpose: Archives web pages as single HTML files, preserving their content locally.
+   - Installation: Follow the setup guide at [[https://github.com/gildas-lormeau/single-file-cli][gildas-lormeau/single-file-cli]]. Typically installed via npm or a prebuilt binary.
+   - Verification: Check availablity and ensure =single-file= is in your system =PATH=:
+     #+BEGIN_SRC sh
+     single-file --version
+     #+END_SRC
+
+2. *Curl and HTMLq*
+   - Purpose: Fetches webpage titles efficiently for raw URLs.
+   - Installation: Install via your system package manager:
+     - On Debian/Ubuntu: =sudo apt install curl htmlq=
+     - On macOS (Homebrew): =brew install curl htmlq=
+     - On Windows: =scoop install main/curl main/htmlq=
+   - Verification: Check availability and ensure they are available in your system =PATH=:
+     #+BEGIN_SRC sh
+     curl --version
+     htmlq --version
+     #+END_SRC
+
+3. *CRC32 Library*
+   - Purpose: Generates unique CRC32 hashes for filenames to avoid collisions.
+   - Options:
+     - [[https://github.com/nitincodery/crc32.el][nitincodery/crc32.el]]: A lightweight CRC32 implementation.
+     - [[https://codeberg.org/Jaft/Emacs-CRC][Jaft/Emacs-CRC]]: An alternative with similar functionality.
+   - Installation: Use your Emacs package manager (e.g., =package-install=) or manually add to your load path.
+
+** Installing org-dex
+
+1. *Obtain the Package*
+   - Source: Download or clone from [[https://github.com/nitincodery/org-dex.el][nitincodery/org-dex.el]].
+   - Method: Use git (=git clone=) or download the =org-dex.el= file directly.
+
+2. *Configure Emacs*
+   - Add to your =init.el=:
+     #+BEGIN_SRC emacs-lisp
+     (add-to-list 'load-path "/path/to/org-dex")
+     (require 'org-dex)
+     #+END_SRC
+   - Replace =/path/to/org-dex= with the actual directory containing =org-dex.el=.
+
+3. *Verify Setup*
+   - Run =M-x org-dex-menu= after restarting Emacs.
+   - Success: The Transient menu appears.
+   - Failure: Check for dependency errors (e.g., missing SingleFile CLI) and resolve them.
+
+4. *Customization*
+   - =Org-Dex.el= is highly customizable through the =org-dex= customization group, accessible via =M-x customize-group RET org-dex RET= or by setting variables in your =init.el=. Options are divided into general and title fetching settings.
+
+      #+BEGIN_SRC emacs-lisp
+      ;; Configure org-dex package
+      (require 'org-dex)  ; Ensure org-dex is loaded (optional if autoloads are used)
+   
+      ;; Enable auto-fetching and updating of raw URLs before archiving
+      (setq org-dex-auto-archive-raw-urls t)
+   
+      ;; Set custom directories for archived files
+      (setq org-dex-sf-directory "~/archives/singlefile/"
+            org-dex-org-directory "~/archives/org/")
+   
+      ;; Customize link descriptions
+      (setq org-dex-url-description "Web Link"  ; Static string for raw URLs
+	    org-dex-sf-description (lambda () (format-time-string "Archived on %Y-%m-%d"))  ; Dynamic SingleFile desc
+	    org-dex-org-description "Org Archive")  ; Static string for Org files
+
+      ;; Override link type behavior (assuming these exist in org-dex)
+      (setq org-dex-url-override-type :url  ; Use URL as description for :url types
+	    org-dex-title-override-type :org)  ; Use title for :org types
+
+      ;; Define archiving order (assuming org-dex-archive-options-and-order exists)
+      (setq org-dex-archive-options-and-order '(:org :sf :url))
+      #+END_SRC
+
+* Usage
+
+=Org-Dex.el= provides a suite of interactive commands to archive web pages, fetch titles, open links, and manage your Org-mode buffers. Commands operate at three levels — region, heading, and point. They are accessible via a Transient menu or directly with =M-x=.
+
+** Accessing Commands
+
+- *Transient Menu*: Launch with =M-x org-dex-menu=.
+  - Suggested Keybinding: Add to your =init.el= for convenience:
+    #+BEGIN_SRC emacs-lisp
+    (global-set-key (kbd "C-c x") 'org-dex-menu)
+    #+END_SRC
+  - Menu Structure:
+    - *Region Commands*: =a= (archive), =t= (get titles), =r= (reset), =m= (revert missing), =s= (open SingleFiles), =u= (open URLs).
+    - *Heading Commands*: =A= (archive), =T= (get titles), =R= (reset), =M= (revert missing), =S= (open SingleFiles), =U= (open URLs).
+    - *Point Commands*: =x= (archive link), =z= (get title).
+    - *Utility Actions*: =l= (view log), =e= (view errors), =c= (customize), =q= (quit).
+
+- *Direct Access*: Use =M-x= followed by the command name (e.g., =M-x org-dex-archive-region=).
+
+** Archiving Web Links
+
+Archiving transforms Org-mode links or raw URLs into a combination of URL, SingleFile HTML, and/or Org file links, based on your settings.
+
+1. *Region*: =M-x org-dex-archive-region= (=a=)
+   - Action: Archives all Org-mode links within a selected region.
+   - Usage: Highlight a region containing links, then run the command.
+   - Result: Links are replaced with a group of links (e.g., URL and SingleFile) per =org-dex-archive-options-and-order=.
+   - Example:
+     #+BEGIN_SRC org
+     [[https://example.com][Example]]
+     #+END_SRC
+     Becomes:
+     #+BEGIN_SRC org
+     [[https://example.com][#]] [[file:~/org/internet/single-files/hash-example-com.html][❖]]
+     #+END_SRC
+
+2. *Heading*: =M-x org-dex-archive-under-heading= (=A=)
+   - Action: Archives all Org-mode links under the current heading.
+   - Usage: Position the cursor within a heading and run the command.
+   - Scope: Applies to the entire subtree.
+
+3. *Point*: =M-x org-dex-archive-link-at-point= (=x=)
+   - Action: Archives the Org-mode link under the cursor.
+   - Usage: Place the cursor on a link and execute.
+
+4. *Reset*: =M-x org-dex-reset-region= (=r=)
+   - Action: Reverts archived links in a region to their original URLs, optionally deleting associated files if =org-dex-delete-unused-files= is =t=.
+   - Heading Version: =M-x org-dex-reset-under-heading= (=R=).
+   - Usage: Select a region with archived links and run.
+
+5. *Revert Missing*: =M-x org-dex-revert-missing-files-region= (=m=)
+   - Action: Reverts links to their original URLs if associated SingleFile or Org files are missing.
+   - Heading Version: =M-x org-dex-revert-missing-files-under-heading= (=M=).
+   - Usage: Useful for cleaning up broken links after file deletion or movement.
+
+** Fetching Titles for URLs
+
+Title fetching converts raw URLs into Org-mode links with their webpage titles, enhancing readability and context.
+
+1. *Region*: =M-x org-dex-get-titles= (=t=)
+   - Action: Fetches titles for all raw URLs in a selected region and formats them as Org-mode links.
+   - Usage: Highlight a region with raw URLs (not already links) and run.
+   - Example:
+     #+BEGIN_SRC org
+     https://example.com
+     #+END_SRC
+     Becomes:
+     #+BEGIN_SRC org
+     [[https://example.com][Example Title]]
+     #+END_SRC
+
+2. *Heading*: =M-x org-dex-get-titles-under-heading= (=T=)
+   - Action: Processes all raw URLs under the current heading.
+   - Usage: Position the cursor within a heading and execute.
+
+3. *Point*: =M-x org-dex-get-title-at-point= (=z=)
+   - Action: Converts a single raw URL at the cursor into a titled Org-mode link.
+   - Usage: Place the cursor on a raw URL and run.
+
+** Opening Links
+
+Open archived SingleFile HTML files or URLs directly from Org-mode in your default browser.
+
+1. *SingleFiles*: =M-x org-dex-open-sf-region= (=s=)
+   - Action: Opens all SingleFile HTML links in a selected region.
+   - Heading Version: =M-x org-dex-open-sf-under-heading= (=S=).
+   - Usage: Select a region with SingleFile links and run.
+
+2. *URLs*: =M-x org-dex-open-url-region= (=u=)
+   - Action: Opens all URL links in a selected region.
+   - Heading Version: =M-x org-dex-open-url-under-heading= (=U=).
+   - Usage: Select a region with URLs and execute.
+
+** Viewing Logs
+
+- *Operation Logs*: =*org-dex-log*= (=l=)
+  - Purpose: Displays a record of all archiving and title fetching actions.
+  - Usage: Access via the menu to review recent operations.
+
+- *Error Logs*: =*org-dex-err*= and =*fetch-titles-err*= (=e=)
+  - Purpose: Shows errors from archiving (=*org-dex-err*=) or title fetching (=*fetch-titles-err*=).
+  - Usage: Check these buffers to troubleshoot issues like missing dependencies.
+
