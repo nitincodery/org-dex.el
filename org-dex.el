@@ -165,19 +165,15 @@ Filters and orders links according to `org-dex-archive-options-and-order', joini
           (repeat :tag "Custom" string))
   :group 'org-dex)
 
-(defcustom org-dex-hash-func-choice 'crc32
+(defcustom org-dex-url-hash-func #'crc32
   "CRC function to use for hashing filenames.
 Options:
 - 'crc32 from github@nitincodery/crc32.el
 - 'crc-32 from codeberg@Jaft/Emacs-CRC"
   :type '(choice
           (const :tag "'crc32 (nitincodery)" crc32)
-          (const :tag "'crc-32 (Jaft)" crc-32)
-	  (repeat :tag "Custom" string))
-  :group 'org-dex
-  :set (lambda (symbol value)
-         (set-default symbol value)
-         (defalias 'org-dex-hash-func value)))
+          (const :tag "'crc-32 (Jaft)" crc-32))
+  :group 'org-dex)
 
 (defun org-dex--collect-links (beg end)
   "Collect all Org-mode links in the region from BEG to END.
@@ -260,9 +256,6 @@ Returns a cons cell (grouped-matches . ungrouped-matches), where:
             (push group grouped-matches)
           (push group ungrouped-matches)))
       (cons (nreverse grouped-matches) (nreverse ungrouped-matches)))))
-
-
-(defalias 'org-dex-hash-func (symbol-value 'org-dex-hash-func-choice))
 
 (defun org-dex--dashed-string (str)
   "Convert STR to a safe filename by replacing non-alphanumeric characters with spaces and joining with dashes.
@@ -608,7 +601,7 @@ When the queue is empty, logs completion and processes the buffer queue for reve
       ;; Process next link if queue has items
       (let* ((link (pop org-dex--links-queue))	     
 	     (progress (format "[%d/%d]" (- org-dex--links-queue-length (length org-dex--links-queue)) org-dex--links-queue-length))
-             (link-hash (org-dex-hash-func (org-dex--process-link (org-dex--replace-domain (car link)))))
+             (link-hash (funcall org-dex-url-hash-func (org-dex--process-link (org-dex--replace-domain (car link)))))
 	     (sf-command (list org-dex-sf-command (org-dex--replace-domain (car link))
 			       (format "--filename-template=%s.html" (cdr link))
 			       (format "--output-directory=%s" (expand-file-name org-dex-sf-directory))))
@@ -997,7 +990,7 @@ Called by `org-dex-archive-region' to process queued archive operations."
 	  
           ;; Proceed only if url and title are set
           (when (and url title)
-            (let* ((dashed-desc (org-dex--hashed-file-name url title))
+            (let* ((dashed-desc (funcall org-dex-file-name-func url title))
                    (sf-file (expand-file-name (concat org-dex-sf-directory "/" dashed-desc ".html")))
                    (org-file (expand-file-name (concat org-dex-org-directory "/" dashed-desc ".org"))))
 	      
@@ -1016,7 +1009,7 @@ Called by `org-dex-archive-region' to process queued archive operations."
 				  replacement-links))
 
 		      ;; Add link to `links` to be consumed by org-dex--download-links			   
-		      (:sf (let* ((hash (org-dex-hash-func (org-dex--process-link url)))
+		      (:sf (let* ((hash (funcall org-dex-url-hash-func (org-dex--process-link url)))
 				  (existing-file (org-dex--sanitize-file-path
 						  (org-dex--find-existing-sf-file hash)))
 				  (new-file (org-dex--sanitize-file-path sf-file)))
@@ -1195,8 +1188,8 @@ Verifies SingleFile CLI, Curl, HTMLq and CRC function availability, signaling er
     (error "Curl not found. Please install it and ensure it's in your PATH."))
   (unless (executable-find "htmlq")
     (error "HTMLq not found. Please install it and ensure it's in your PATH."))
-  (unless (fboundp 'org-dex-hash-func)
-    (error "CRC function '%s' is not defined. Please install a CRC32 library (e.g., crc32.el or Emacs-CRC)." org-dex-hash-func)))
+  (unless (or (fboundp 'crc32) (fboundp 'crc-32))
+    (error "CRC function '%s' is not defined. Please install a CRC32 library (e.g., crc32.el or Emacs-CRC)." org-dex-url-hash-func)))
 
 (defun org-dex--region-has-links (link-matches)
   "Check if LINK-MATCHES contains any Org-mode links.
@@ -1217,9 +1210,9 @@ Returns nil if PATH is nil, otherwise the expanded path."
 
 (defun org-dex--hashed-file-name (url title)
   "Generate a hashed filename using URL and TITLE.
-Uses `org-dex-hash-func` for the hash, combined with a dashed title per `org-dex-hash-location`.
+Uses `org-dex-url-hash-func' for the hash, combined with a dashed title per `org-dex-hash-location'.
 Returns a string suitable for filenames."
-  (let ((link-hash (org-dex-hash-func (org-dex--process-link url))))
+  (let ((link-hash (funcall org-dex-url-hash-func (org-dex--process-link url))))
     (setq title (if (or (not title) (string-empty-p title)) (org-dex--process-link url) title))
     (pcase org-dex-hash-location
       ('append (concat (org-dex--dashed-string title) "-" link-hash))
@@ -1338,7 +1331,7 @@ Logs progress and stores results in `org-dex--title-results'."
                       "\\1" link))
              (base-domain (replace-regexp-in-string "^www\\." "" domain))
              (use-sf (if (member base-domain org-dex-title-domains) t nil))
-             (link-hash (org-dex-hash-func (org-dex--process-link (org-dex--replace-domain link))))
+             (link-hash (funcall org-dex-url-hash-func (org-dex--process-link (org-dex--replace-domain link))))
              (sf-command (list org-dex-sf-command link
                                (format "--filename-template=%s.html" link-hash)
                                (format "--output-directory=%s" (expand-file-name org-dex-sf-directory))))
@@ -1386,7 +1379,7 @@ Logs progress and stores results in `org-dex--title-results'."
                          ;; Handle SingleFile success
                          (let* ((title (caar (org-dex--get-title-and-url-from-sf sf-file)))
                                 (sf-file-updated (when title (expand-file-name (concat org-dex-sf-directory "/"
-                                                                                       (org-dex--hashed-file-name link title)
+                                                                                       (funcall org-dex-file-name-func link title)
                                                                                        ".html"))))
                                 (updated-entry (plist-put entry :title (if (or (not title) (string-empty-p title)) (org-dex--process-link link) title))))
                            (when (and title (not (file-exists-p sf-file-updated)))
