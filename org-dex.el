@@ -496,7 +496,7 @@ The check is performed against all entries in `org-dex--operation-queue', consid
 					    ;; Any overlap
 					    (and (<= current-beg-pos queued-end-pos)
 						 (>= current-end-pos queued-beg-pos))))))
-				  (queue-all org-dex--operation-queue))))
+				  (queue-all (or org-dex--operation-queue (queue-create))))))
     (if overlap-entry t nil)))
 
 (defun org-dex--add-operation (region op)
