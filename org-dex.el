@@ -1036,13 +1036,13 @@ Called by `org-dex-archive-region' to process queued archive operations."
 
 		      
                       (:org (unless (file-exists-p (org-dex--sanitize-file-path org-file))
-                              (write-region (concat "#+TITLE: " title "\n"
-                                                    "#+URL: " url "\n"
-                                                    "#+DATE: " (org-dex--insert-date-day) "\n\n"
-                                                    "SingleFile: " (org-dex--generate-heading
-                                                                    (list :sf sf-file title))
-						    "\n")
-                                            nil org-file t))
+			      (write-region (funcall org-dex-org-content-func
+						     title
+						     url
+						     (org-dex--insert-date-day)
+						     (org-dex--generate-heading (list :sf sf-file title)))
+					    nil org-file t))
+			    
                             (push (list :org org-file (cond
 						       ((eq :org org-dex-url-override-type) url)
 						       ((eq :org org-dex-title-override-type) title)
@@ -1610,6 +1610,31 @@ When t. If nil, archiving must be triggered manually. Default is t."
   "Queue of org-dex operations as (BUFFER-OR-FILE REGION OP) entries.
 BUFFER-OR-FILE is a buffer or file, REGION is a cons (BEG . END) of markers or positions, OP is :fetch, :update, :archive, or :revert.
 Nil until initialized by `org-dex--add-operation'; cleared by reset or kill functions.")
+
+(defun org-dex--default-org-content (title url date content)
+   "Generate default Org-mode content for an archived webpage.
+TITLE is the title of the page.
+URL is the page's web address.
+DATE is the timestamp when the page was saved.
+CONTENT is the local file path of the SingleFile-saved HTML.
+
+Returns a string formatted as an Org document."
+  (concat "#+TITLE: " title "\n"
+          "#+URL: " url "\n"
+          "#+DATE: " date "\n\n"
+          "SingleFile: " content
+	  "\n"))
+
+(defcustom org-dex-org-content-func #'org-dex--default-org-content
+  "Function used to generate Org-mode content for archived webpages.
+
+This function should accept four arguments: TITLE, URL, DATE, and CONTENT.
+CONTENT can be any custom content. It must return a string formatted as an Org document.
+
+The default function is `org-dex--default-org-content`, but users can set a custom function
+to modify the output as needed."
+  :type 'function
+  :group 'org-dex)
 
 (provide 'org-dex)
 ;;; org-dex.el ends here
