@@ -30,13 +30,13 @@
 ;; - Revert links with missing archive files to their original URLs.
 ;; - Open archived SingleFile HTML files or URLs directly from Org-mode.
 ;; - Customizable domain mapping for URL replacement.
-;; - A transient menu (`org-dex-menu`) for easy access to all commands.
+;; - A transient menu (`org-dex-menu') for easy access to all commands.
 ;;
 ;; Usage:
-;; - Open `M-x org-dex-menu` to access all org-dex commands.
-;; - Use `org-dex-archive-region` to archive links in a selected region.
-;; - Use `org-dex-fetch-region` to fetch titles for raw URLs in a region.
-;; - Customize settings via `M-x customize-group RET org-dex RET`.
+;; - Open M-x `org-dex-menu' to access all org-dex commands.
+;; - Use `org-dex-archive-region' to archive links in a selected region.
+;; - Use `org-dex-fetch-region' to fetch titles for raw URLs in a region.
+;; - Customize settings via M-x `customize-group' RET `org-dex' RET.
 ;;
 ;; For detailed examples and edge cases, see the function docstrings or the README.
 
@@ -44,18 +44,18 @@
 ;;
 ;; 1. Install SingleFile CLI:
 ;;    - Follow the instructions at https://github.com/gildas-lormeau/single-file-cli
-;;    - Ensure the `single-file` command is available in your PATH.
+;;    - Ensure the `single-file' command is available in your PATH.
 ;;
 ;; 2. Install Curl:
 ;;    - Follow the instructions at https://curl.se/download.html
-;;    - Ensure the `curl` command is available in your PATH.
+;;    - Ensure the `curl' command is available in your PATH.
 ;;
 ;; 3. Install HTMLq:
 ;;    - Follow the instructions at https://github.com/mgdm/htmlq
-;;    - Ensure the `htmlq` command is available in your PATH.
+;;    - Ensure the `htmlq' command is available in your PATH.
 ;;
 ;; 4. Install CRC32 library:
-;;    - Install either `crc32.el` or `Emacs-CRC` using your preferred package manager.
+;;    - Install either `crc32.el' or `Emacs-CRC' using your preferred package manager.
 ;;
 ;; 5. Install org-dex:
 ;;    - Add the following to your Emacs configuration:
@@ -85,7 +85,7 @@
   :group 'org-dex)
 
 (defcustom org-dex-delete-unused-files nil
-  "If non-nil, delete unused :sf or :org files when trimming keys not in `org-dex-archive-options-and-order`."
+  "If non-nil, delete unused :sf or :org files when trimming keys not in `org-dex-archive-options-and-order'."
   :type 'boolean
   :group 'org-dex)
 
@@ -123,8 +123,8 @@ The order determines the display sequence in the generated heading."
 (defun org-dex--generate-heading (&rest link-pairs)
   "Generate a formatted string of Org-mode links based on user configuration.
 LINK-PAIRS is a list of (type path description) lists, where type is :url, :sf, or :org.
-Filters and orders links according to `org-dex-archive-options-and-order`, joining them with
-`org-dex-link-separator`. Returns the formatted string or an empty string if no valid links."
+Filters and orders links according to `org-dex-archive-options-and-order', joining them with
+`org-dex-link-separator'. Returns the formatted string or an empty string if no valid links."
   (let ((links-map '()))
     (dolist (link link-pairs)
       (let ((type (car link))
@@ -218,9 +218,9 @@ Returns a list of plists, each containing:
     (nreverse matches)))  ;; Return matches in buffer order
 
 (defun org-dex--group-links (matches)
-  "Group consecutive links in MATCHES separated by `org-dex-link-separator`.
-MATCHES is a list of link plists from `org-dex--collect-links`.
-Classifies groups as matching `org-dex-archive-options-and-order` or not.
+  "Group consecutive links in MATCHES separated by `org-dex-link-separator'.
+MATCHES is a list of link plists from `org-dex--collect-links'.
+Classifies groups as matching `org-dex-archive-options-and-order' or not.
 Returns a cons cell (grouped-matches . ungrouped-matches), where:
 - grouped-matches: List of groups matching the order and types.
 - ungrouped-matches: List of groups that do not match."
@@ -278,7 +278,7 @@ Returns the quoted string."
   (concat "\"" str "\""))
 
 (defun org-dex--ensure-directory ()
-  "Ensure the directories in `org-dex-sf-directory` and `org-dex-org-directory` exist.
+  "Ensure the directories in `org-dex-sf-directory' and `org-dex-org-directory' exist.
 Creates directories if they don’t exist, handling errors gracefully.
 Signals an error with details if directory creation fails."
   (condition-case err
@@ -345,7 +345,7 @@ Can be a string or a function that returns a string."
 (defun org-dex-reset-region (beg end)
   "Reset all processed links in the region from BEG to END back to their original URL form.
 BEG and END are buffer positions or markers defining the region.
-Processed links match `org-dex-archive-options-and-order`. Deletes associated :sf and :org files
+Processed links match `org-dex-archive-options-and-order'. Deletes associated :sf and :org files
 if they exist. Updates the buffer and logs the reset operation."
   (interactive "r")
   (save-excursion
@@ -600,7 +600,7 @@ nothing if the buffer is not live or the queue is empty."
   "Count of links to be processed by SingleFile.")
 
 (defun org-dex--process-next-link ()
-  "Process the next link in `org-dex--links-queue` using SingleFile.
+  "Process the next link in `org-dex--links-queue' using SingleFile.
 Handles sequential downloading, logs progress, and triggers the next process.
 When the queue is empty, logs completion and processes the buffer queue for reverting."
   (if (and org-dex--links-queue (not org-dex--links-processing))
@@ -650,7 +650,7 @@ When the queue is empty, logs completion and processes the buffer queue for reve
 (defun org-dex-revert-region (beg end)
   "Revert links in the region from BEG to END if associated files are missing.
 BEG and END are positions or markers.
-Checks groups matching `org-dex-archive-options-and-order` and reverts to the original URL
+Checks groups matching `org-dex-archive-options-and-order' and reverts to the original URL
 if any :sf or :org file is missing. Logs the number of reverted links."
   (interactive "r")
   (save-excursion
@@ -760,7 +760,7 @@ Format is [YYYY-MM-DD Day], e.g., [2023-10-15 Sun]."
 
 (defun org-dex-archive-heading ()
   "Move to the parent heading and archive all Org-mode links under it.
-Uses `org-dex-archive-region` to process the subtree."
+Uses `org-dex-archive-region' to process the subtree."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -769,7 +769,7 @@ Uses `org-dex-archive-region` to process the subtree."
 
 (defun org-dex-reset-heading ()
   "Move to the parent heading and reset all Org-mode links under it.
-Uses `org-dex-reset-region` to revert links in the subtree to their original URLs."
+Uses `org-dex-reset-region' to revert links in the subtree to their original URLs."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -778,7 +778,7 @@ Uses `org-dex-reset-region` to revert links in the subtree to their original URL
 
 (defun org-dex-revert-heading ()
   "Move to the parent heading and revert missing file links under it.
-Uses `org-dex-revert-region` to process the subtree."
+Uses `org-dex-revert-region' to process the subtree."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -857,7 +857,7 @@ Returns the string without the prefix."
 (defun org-dex-archive-region (beg end)
   "Archive web links in the region between BEG and END using SingleFile.
 BEG and END are positions or markers.
-Processes Org-mode links, grouping them and archiving according to `org-dex-archive-options-and-order`.
+Processes Org-mode links, grouping them and archiving according to `org-dex-archive-options-and-order'.
 Downloads missing SingleFile archives and creates Org files as needed.
 Updates the buffer with new link groups and queues the region for post-processing."
   (interactive "r")
@@ -1075,7 +1075,7 @@ Called by `org-dex-archive-region' to process queued archive operations."
       (setq org-dex--current-operation nil))))
 
 (defun org-dex-archive-point ()
-  "Archive the Org-mode link at point using `org-dex-archive-region`.
+  "Archive the Org-mode link at point using `org-dex-archive-region'.
 Detects the link under the cursor and processes it if it’s an Org-mode link.
 Displays a message if no link is found."
   (interactive)
@@ -1144,7 +1144,7 @@ Opens each :sf link in the default browser."
 
 (defun org-dex-open-sf-heading ()
   "Move to the parent heading and open all SingleFile links under it.
-Uses `org-dex-open-sf-region` to process the subtree."
+Uses `org-dex-open-sf-region' to process the subtree."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -1179,7 +1179,7 @@ Opens each :url link in the default browser."
 
 (defun org-dex-open-url-heading ()
   "Move to the parent heading and open all URL links under it.
-Uses `org-dex-open-url-region` to process the subtree."
+Uses `org-dex-open-url-region' to process the subtree."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -1200,7 +1200,7 @@ Verifies SingleFile CLI, Curl, HTMLq and CRC function availability, signaling er
 
 (defun org-dex--region-has-links (link-matches)
   "Check if LINK-MATCHES contains any Org-mode links.
-Argument LINK-MATCHES is a list from `org-dex--collect-links`.
+Argument LINK-MATCHES is a list from `org-dex--collect-links'.
 If empty, throws 'no-link. Returns nil if links exist."
   (catch 'no-link
     (if (null link-matches)
@@ -1300,7 +1300,7 @@ If nil, no override occurs."
 
 (defun org-dex--fetch-titles (links)
   "Fetch titles for URLs in LINKS using curl + htmlq or SingleFile.
-Argument LINKS is a list of plists from `org-dex--collect-urls`.
+Argument LINKS is a list of plists from `org-dex--collect-urls'.
 Initializes the title queue and starts fetching sequentially."
   ;; Reset and initialize queue
   (setq org-dex--title-queue links
@@ -1322,10 +1322,10 @@ Initializes the title queue and starts fetching sequentially."
   :group 'org-dex)
 
 (defun org-dex--fetch-next-title ()
-  "Fetch the next title from `org-dex--title-queue` if no process is running.
-Uses curl + htmlq for most domains, or SingleFile for domains in `org-dex-title-domains`.
+  "Fetch the next title from `org-dex--title-queue' if no process is running.
+Uses curl + htmlq for most domains, or SingleFile for domains in `org-dex-title-domains'.
 Falls back to SingleFile if curl fails to retrieve a title, skipping download if file exists.
-Logs progress and stores results in `org-dex--title-results`."
+Logs progress and stores results in `org-dex--title-results'."
   (if (and org-dex--title-queue (not org-dex--title-processing))
       ;; Process next link if queue has items
       (let* ((entry (pop org-dex--title-queue))
@@ -1438,7 +1438,7 @@ Logs progress and stores results in `org-dex--title-results`."
 
 (defun org-dex-fetch-heading ()
   "Move to the parent heading, fetch titles for raw URLs, and convert them to Org-mode links.
-Processes the entire subtree using `org-dex-fetch-region`."
+Processes the entire subtree using `org-dex-fetch-region'."
   (interactive)
   (org-up-heading-all 1)
   (let ((start (point))
@@ -1489,7 +1489,7 @@ Called by `org-dex-fetch-region' to handle queued fetch operations."
       (setq org-dex--current-operation nil))))
 
 (defun org-dex--do-update-buffer ()
-  "Update the buffer with Org-mode links using fetched titles from `org-dex--title-results`.
+  "Update the buffer with Org-mode links using fetched titles from `org-dex--title-results'.
 Replaces raw URLs with formatted Org-mode links containing their titles."
   (save-excursion
     (let ((results (nreverse org-dex--title-results)))
@@ -1537,8 +1537,8 @@ Returns a new list with duplicates removed based on exact triplet matches."
                 nil shortcut))
 
 (defun org-dex--find-existing-sf-file (hash)
-  "Find an existing SingleFile with the given HASH in `org-dex-sf-directory`.
-The hash location (prepend or append) is determined by `org-dex-hash-location`.
+  "Find an existing SingleFile with the given HASH in `org-dex-sf-directory'.
+The hash location (prepend or append) is determined by `org-dex-hash-location'.
 Returns the full path of the first matching file or nil if none found."
   (let ((pattern (pcase org-dex-hash-location
                    ('prepend (concat "^" hash "-.*\\.html$"))
@@ -1631,7 +1631,7 @@ Returns a string formatted as an Org document."
 This function should accept four arguments: TITLE, URL, DATE, and CONTENT.
 CONTENT can be any custom content. It must return a string formatted as an Org document.
 
-The default function is `org-dex--default-org-content`, but users can set a custom function
+The default function is `org-dex--default-org-content', but users can set a custom function
 to modify the output as needed."
   :type 'function
   :group 'org-dex)
