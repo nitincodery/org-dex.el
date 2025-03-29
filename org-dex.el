@@ -191,13 +191,11 @@ Returns a list of plists, each containing:
     (save-excursion
       (goto-char beg-pos)
       (while (re-search-forward pattern end-pos t)
-        (let* ((match-start (let ((m (make-marker)))
-			      (set-marker m (match-beginning 0))
+        (let* ((match-start (let ((m (nth 0 (match-data))))
 			      (set-marker-insertion-type m t)
 			      m))
 	       
-	       (match-last (let ((m (make-marker)))
-			     (set-marker m (match-end 0))
+	       (match-last (let ((m (nth 1 (match-data))))
 			     (set-marker-insertion-type m t)
 			     m))
 	       
@@ -1241,13 +1239,11 @@ Returns a list of plists with :link, :start, and :end for each raw URL."
       ;; Collect raw URLs, excluding those within Org-link regions
       (goto-char beg-pos)
       (while (re-search-forward pattern end-pos t)
-        (let* ((match-start (let ((m (make-marker)))
-			      (set-marker m (match-beginning 0))
+        (let* ((match-start (let ((m (nth 0 (match-data))))
 			      (set-marker-insertion-type m t)
 			      m))
 	       
-               (match-last (let ((m (make-marker)))
-			     (set-marker m (match-end 0))
+               (match-last (let ((m (nth 1 (match-data))))
 			     (set-marker-insertion-type m t)
 			     m))
 	       
