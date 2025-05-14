@@ -1,7 +1,7 @@
 ;;; org-dex.el --- Archive web pages as SingleFiles in Org mode  -*- lexical-binding: t; -*-
 
 ;; Author: Nitin Choudhary <nitin@codery.xyz>
-;; Version: 1.0.0
+;; Version: 1.0.1
 ;; URL: https://github.com/nitincodery/org-dex.el
 
 ;;; Commentary:
@@ -1162,11 +1162,19 @@ Opens each :url link in the default browser."
 			m)))
 
 	   (link-matches (org-dex--collect-links beg-val end-val))
-	   (_ (org-dex--region-has-links link-matches)))
+	   (raw-url-matches (org-dex--collect-urls beg-val end-val))
+
+	   ;; Filter :url links and merge with raw URLs, sorted by :start
+           (all-matches (sort
+			 (append (seq-filter
+				  (lambda (match)
+				    (eq (plist-get match :type) :url))
+				  link-matches)
+                                 raw-url-matches)
+                         (lambda (a b) (< (plist-get a :start) (plist-get b :start))))))
       
-      (dolist (match link-matches)
-	(if (eq (plist-get match :type) :url)
-            (browse-url (plist-get match :link)))))))
+      (dolist (match all-matches)
+        (browse-url (plist-get match :link))))))
 
 (defun org-dex-open-url-heading ()
   "Move to the parent heading and open all URL links under it.
